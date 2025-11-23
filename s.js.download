@@ -1,0 +1,179 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 1. DEFINISI ELEMEN PENTING ---
+    
+    // Konten utama web
+    const mainContainer = document.querySelector('.new-container');
+    const mainContent = document.querySelector('.new-content');
+
+    // Pop-up ucapan berantai (ada 7 pop-up dengan kelas .pu-ctn)
+    const greetingPopups = document.querySelectorAll('.pu-ctnr.pu-ctn');
+    const startButton = document.querySelector('.btn-start');
+
+    // Pop-up Kirim Pesan
+    const sendMessagePopup = document.querySelector('.pu-ctnr.ta');
+    const messageTextarea = sendMessagePopup ? sendMessagePopup.querySelector('textarea') : null;
+    const sendMessageButton = sendMessagePopup ? sendMessagePopup.querySelector('.btn button') : null;
+    
+    // Pop-up Notifikasi dan WA
+    const jksgPopup = document.querySelector('.pu-ctnr.jksg'); // Jangan dikosongin
+    const pgsPopup = document.querySelector('.pu-ctnr.pgs'); // Mengirim pesan
+    const towaPopup = document.querySelector('.pu-ctnr.towa'); // Kirim ke WA
+    const genericOkButtons = document.querySelectorAll('.pu-ctnr:not(.pu-ctn) .btn button');
+
+    // Variabel untuk menyimpan pesan
+    let userMessage = ''; 
+    const phoneNumber = '628xxxxxxxxxx'; // <-- GANTI DENGAN NOMOR WA ANDA!
+
+    // Dapatkan elemen audio (PASTIKAN BAGIAN INI ADA)
+    const myAudio = document.getElementById('myAudio');
+
+    
+    // --- 2. FUNGSI UNTUK MENAMPILKAN KEMBALI KONTEN UTAMA ---
+
+    function showMainContent() {
+        if (mainContent) {
+            // Pastikan elemen induk (.new-container) memiliki display yang benar
+            if (mainContainer) {
+                mainContainer.style.display = 'flex'; 
+                mainContainer.classList.add('show');
+            }
+            // Tampilkan kembali elemen .new-content yang berisi judul, foto, dan tombol
+            mainContent.style.display = 'flex'; 
+            mainContent.classList.remove('hide');
+            mainContent.classList.add('show');
+        }
+    }
+
+
+    // --- 3. Aksi Tombol 'Click Me' Awal ---
+    if (startButton) {
+    // Tombol ini hanya ada di dalam .new-content
+    startButton.addEventListener('click', function() {
+        
+        // --- AKSI 1: MEMUTAR LAGU ---
+        if (myAudio) {
+            myAudio.play().catch(error => {
+                // Autoplay mungkin diblokir, tidak perlu khawatir
+                console.log('Audio Play diblokir, tapi aksi dilanjutkan.'); 
+            });
+        }
+        
+        // --- AKSI 2: BERPINDAH KE POP-UP ---
+
+        // Sembunyikan konten utama (yang berisi tombol 'Click Me')
+        if (mainContent) {
+            mainContent.style.display = 'none';
+            mainContent.classList.remove('show');
+            mainContent.classList.add('hide');
+        }
+
+        // Tampilkan pop-up pertama dari rangkaian ucapan
+        if (greetingPopups.length > 0) {
+            greetingPopups[0].style.display = 'flex';
+        }
+    });
+}
+
+    
+    // --- 4. Aksi Tombol 'OK' di Rangkaian Pop-up Ucapan (.pu-ctn) ---
+    
+    greetingPopups.forEach(function(popup) {
+        const okButton = popup.querySelector('.btn button');
+        
+        if (okButton) {
+            // Hapus atribut onclick="" yang kosong agar tidak mengganggu event listener
+            okButton.removeAttribute('onclick'); 
+            
+            okButton.addEventListener('click', function() {
+                // Temukan indeks pop-up saat ini
+                const currentIndex = Array.from(greetingPopups).indexOf(popup);
+                
+                // Sembunyikan pop-up saat ini
+                popup.style.display = 'none';
+
+                // Cek apakah ada pop-up berikutnya
+                if (currentIndex < greetingPopups.length - 1) {
+                    // Tampilkan pop-up berikutnya
+                    greetingPopups[currentIndex + 1].style.display = 'flex'; 
+                } else {
+                    // JIKA SEMUA POP-UP SELESAI, TAMPILKAN KEMBALI KONTEN UTAMA
+                    showMainContent();
+                }
+            });
+        }
+    });
+
+
+    // --- 5. Aksi Tombol 'Kirim' di Pop-up 'Ketik pesan disini' (.pu-ctnr.ta) ---
+    if (sendMessageButton) {
+        sendMessageButton.addEventListener('click', function() {
+            userMessage = messageTextarea ? messageTextarea.value.trim() : '';
+
+            if (userMessage === '') {
+                // Pesan kosong -> tampilkan pop-up "Jangan dikosongin"
+                sendMessagePopup.style.display = 'none';
+                if (jksgPopup) jksgPopup.style.display = 'flex';
+            } else {
+                // Pesan terisi -> tampilkan pop-up "Mengirim pesan" (Loading)
+                sendMessagePopup.style.display = 'none';
+                if (pgsPopup) pgsPopup.style.display = 'flex';
+                
+                // Simulasi loading 2 detik lalu tampilkan pop-up WhatsApp
+                setTimeout(() => {
+                    if (pgsPopup) pgsPopup.style.display = 'none';
+                    if (towaPopup) towaPopup.style.display = 'flex';
+                }, 2000);
+            }
+        });
+    }
+
+
+    // --- 6. Aksi Tombol 'OK' pada Pop-up Notifikasi (.jksg, .scs, .fl) ---
+    // Aksi ini untuk menutup pop-up notifikasi
+    genericOkButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const parentPopup = button.closest('.pu-ctnr');
+            if (parentPopup) {
+                parentPopup.style.display = 'none';
+            }
+
+            // Logika khusus: Jika pop-up "Jangan dikosongin" ditutup, kembali ke pop-up kirim pesan
+            if (parentPopup && parentPopup.classList.contains('jksg')) {
+                if (sendMessagePopup) sendMessagePopup.style.display = 'flex';
+            }
+        });
+    });
+
+
+    // --- 7. Aksi Tombol 'Kirim' di Pop-up WhatsApp (.pu-ctnr.towa) ---
+    const waKirimButton = towaPopup ? towaPopup.querySelector('.btn button') : null;
+    
+    if (waKirimButton) {
+        waKirimButton.addEventListener('click', function() {
+            // Format link WhatsApp menggunakan pesan yang sudah disimpan
+            const waLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(userMessage)}`;
+
+            // Buka link WhatsApp
+            window.open(waLink, '_blank');
+            
+            // Tutup pop-up
+            if (towaPopup) towaPopup.style.display = 'none';
+            
+            // Opsional: Kembali ke konten utama setelah tombol WA ditekan
+            showMainContent();
+        });
+    }
+
+    // --- 8. Inisialisasi Tampilan Awal ---
+    // Sembunyikan semua pop-up .pu-ctn KECUALI yang pertama yang sudah di-set 'display: flex'
+    greetingPopups.forEach((popup, index) => {
+        // Pop-up pertama di set flex di HTML, kita atur sisanya agar sembunyi
+        if (index > 0) { 
+            popup.style.display = 'none';
+        }
+    });
+
+    // Konten utama harus disembunyikan sampai tombol 'Click Me' ditekan
+    // Kita biarkan yang pertama terlihat (sesuai HTML Anda)
+    // Kemudian tombol 'Click Me' akan menyembunyikannya saat ditekan.
+});
